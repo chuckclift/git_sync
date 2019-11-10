@@ -7,9 +7,6 @@ import json
 import re
 import paramiko
 
-root = tk.Tk()
-root.title("Git Sync")
-new_repo = tk.StringVar()
 
 with open(Path.home() / ".gitsync.json") as f:
     cfg = json.loads(f.read())
@@ -38,15 +35,27 @@ def validate_name(repo_name) -> bool:
     return not any(bad_characters_found)
 
 
+def create_repo(repo_entry):
+    new_repo_name = repo_entry.get()
+    client = paramiko.SSHClient()
+    client.load_system_host_keys(Path.home() / ".ssh" / "known_hosts")
+    client.connect(cfg["server"], username=cfg["username"], password=cfg["password"])
+    _, stdout, _ = client.exec_command(f"git init --bare {cfg['path']}/{new_repo_name}.git")
+    repo_entry.set("")
+
+
+root = tk.Tk()
+root.title("Git Sync")
+new_repo = tk.StringVar()
 filename_validation = root.register(validate_name)
 gs = ttk.Frame(root)
 gs.grid(row=0, column=0)
 
-
 ttk.Label(master=gs, text="New Repo:").grid(row=0, column=0)
 ttk.Entry(master=gs, textvariable=new_repo, validate="key",
-          validatecommand=(filename_validation, "%P")).grid(row=0, column=1)
-ttk.Button(master=gs, text="Create", command=lambda:print("foo")
+          validatecommand=(filename_validation, "%P")
+          ).grid(row=0, column=1)
+ttk.Button(master=gs, text="Create", command=lambda: create_repo(new_repo)
            ).grid(row=0, column=2)
 ttk.Button(master=gs, text="Sync",
            command=lambda: render_repos(gs)
