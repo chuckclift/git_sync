@@ -7,6 +7,10 @@ import json
 import re
 import paramiko
 
+root = tk.Tk()
+root.title("Git Sync")
+new_repo = tk.StringVar()
+
 with open(Path.home() / ".gitsync.json") as f:
     cfg = json.loads(f.read())
     local_repo = Path(cfg["local_repo"])
@@ -28,15 +32,20 @@ def render_repos(master):
         ttk.Button(master=master, text=status).grid(row=i, column=2)
 
 
-root = tk.Tk()
-root.title("Git Sync")
+def validate_name(repo_name) -> bool:
+    filename_blacklist = "`~!@#$%^&*()-+={}[]|\\/*:;'\"<>,.?"
+    bad_characters_found = [c in repo_name for c in filename_blacklist]
+    return not any(bad_characters_found)
 
+
+filename_validation = root.register(validate_name)
 gs = ttk.Frame(root)
 gs.grid(row=0, column=0)
-new_repo = tk.StringVar()
+
 
 ttk.Label(master=gs, text="New Repo:").grid(row=0, column=0)
-ttk.Entry(master=gs, textvariable=new_repo).grid(row=0, column=1)
+ttk.Entry(master=gs, textvariable=new_repo, validate="key",
+          validatecommand=(filename_validation, "%P")).grid(row=0, column=1)
 ttk.Button(master=gs, text="Create", command=lambda:print("foo")
            ).grid(row=0, column=2)
 ttk.Button(master=gs, text="Sync",
